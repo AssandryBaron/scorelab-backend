@@ -1,0 +1,70 @@
+package co.escorelab.scorelabbackend.service;
+
+import co.escorelab.scorelabbackend.dto.TorneoRequest;
+import co.escorelab.scorelabbackend.dto.TorneoResponse;
+import co.escorelab.scorelabbackend.model.Torneo;
+import co.escorelab.scorelabbackend.model.Usuario;
+import co.escorelab.scorelabbackend.repository.TorneoRepository;
+import co.escorelab.scorelabbackend.repository.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class TorneoService {
+
+    private final TorneoRepository torneoRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    public TorneoResponse crearTorneo(TorneoRequest request, String correoUsuario) {
+        // 1. Buscamos al usuario dueño del token
+        Usuario organizador = usuarioRepository.findByCorreo(correoUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // 2. Creamos la entidad Torneo
+        Torneo nuevoTorneo = Torneo.builder()
+                .nombre(request.getNombre())
+                .descripcion(request.getDescripcion())
+                .fechaInicio(request.getFechaInicio())
+                .fechaFin(request.getFechaFin())
+                .organizador(organizador)
+                .build();
+
+        // 3. Lo guardamos en la base de datos
+        Torneo torneoGuardado = torneoRepository.save(nuevoTorneo);
+
+        // 4. Devolvemos la respuesta mapeada con el estado dinámico
+        return convertirAResponse(torneoGuardado);
+    }
+
+    public List<TorneoResponse> listarTorneosDeOrganizador(String correoUsuario) {
+        Usuario organizador = usuarioRepository.findByCorreo(correoUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        return torneoRepository.findByOrganizador(organizador).stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Método auxiliar para transformar el modelo al DTO de respuesta
+    private TorneoResponse convertirAResponse(Torneo torneo) {
+        return TorneoResponse.builder()
+                .id(torneo.getId())
+                .nombre(torneo.getNombre())
+                .descripcion(torneo.getDescripcion())
+                .fechaInicio(torneo.getFechaInicio())
+                .fechaFin(torneo.getFechaFin())
+                .estado(torneo.getEstado()) // 🌟 Aquí se ejecuta el cálculo del estado
+                .nombreOrganizador(torneo.getOrganizador().getNombre())
+                .build();
+    }
+
+    public List<TorneoResponse> listarTodosLosTorneos() {
+        return torneoRepository.findAll().stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+}
