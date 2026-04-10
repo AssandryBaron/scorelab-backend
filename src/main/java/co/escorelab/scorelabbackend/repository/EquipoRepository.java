@@ -12,4 +12,7 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
 
     // Para que un usuario delegado vea los equipos que ha creado
     List<Equipo> findByDelegado(Usuario delegado);
+
+    // 🌟 NUEVO: Para que el organizador encuentre todos los equipos que esperan aprobación
+    List<Equipo> findByEstado(String estado);
 }

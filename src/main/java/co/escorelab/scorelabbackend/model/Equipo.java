@@ -26,5 +26,12 @@ public class Equipo {
 
     @ManyToOne
     @JoinColumn(name = "delegado_id", nullable = false)
-    private Usuario delegado; // El usuario que creó y administra el equipo
+    private Usuario delegado;
+
+    // 🌟 NUEVA RELACIÓN: Añade esto para conectar con Torneos
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "torneo_id")
+    private Torneo torneo;
+
+    private String estado;
 }

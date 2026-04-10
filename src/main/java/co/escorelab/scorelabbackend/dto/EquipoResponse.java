@@ -12,4 +12,6 @@ public class EquipoResponse {
     private String ciudad;
     private LocalDate fechaCreacion;
     private String nombreDelegado;
+    private String estado;
+    private String nombreTorneo;
 }

@@ -8,6 +8,7 @@ import co.escorelab.scorelabbackend.repository.EquipoRepository;
 import co.escorelab.scorelabbackend.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,27 +22,22 @@ public class EquipoService {
     private final UsuarioRepository usuarioRepository;
 
     public EquipoResponse crearEquipo(EquipoRequest request, String correoUsuario) {
-        // 1. Buscamos al usuario dueño del token
         Usuario delegado = usuarioRepository.findByCorreo(correoUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // 2. Validamos que el nombre del equipo no esté en uso
         if (equipoRepository.findByNombre(request.getNombre()).isPresent()) {
             throw new RuntimeException("Ya existe un equipo registrado con ese nombre");
         }
 
-        // 3. Creamos la entidad Equipo
         Equipo nuevoEquipo = Equipo.builder()
                 .nombre(request.getNombre())
                 .ciudad(request.getCiudad())
-                .fechaCreacion(LocalDate.now()) // Fecha automática del servidor
+                .fechaCreacion(LocalDate.now())
                 .delegado(delegado)
+                .estado("PENDIENTE") // 🌟 Todo equipo nuevo nace PENDIENTE
                 .build();
 
-        // 4. Lo guardamos en la base de datos
         Equipo equipoGuardado = equipoRepository.save(nuevoEquipo);
-
-        // 5. Devolvemos la respuesta mapeada
         return convertirAResponse(equipoGuardado);
     }
 
@@ -54,7 +50,23 @@ public class EquipoService {
                 .collect(Collectors.toList());
     }
 
-    // Método auxiliar para transformar el modelo al DTO de respuesta
+    // 🌟 NUEVO: Para que el Organizador vea los que esperan aprobación
+    public List<EquipoResponse> listarPendientes() {
+        return equipoRepository.findByEstado("PENDIENTE").stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+    // 🌟 NUEVO: El método que te faltaba para aprobar
+    @Transactional
+    public void cambiarEstado(Long equipoId, String nuevoEstado) {
+        Equipo equipo = equipoRepository.findById(equipoId)
+                .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
+
+        equipo.setEstado(nuevoEstado);
+        equipoRepository.save(equipo);
+    }
+
     private EquipoResponse convertirAResponse(Equipo equipo) {
         return EquipoResponse.builder()
                 .id(equipo.getId())
@@ -62,6 +74,9 @@ public class EquipoService {
                 .ciudad(equipo.getCiudad())
                 .fechaCreacion(equipo.getFechaCreacion())
                 .nombreDelegado(equipo.getDelegado().getNombre())
+                .estado(equipo.getEstado()) // 🌟 Mapeamos el estado a la respuesta
+                // Si tu modelo Equipo tiene relación con Torneo, añade esto:
+                .nombreTorneo(equipo.getTorneo() != null ? equipo.getTorneo().getNombre() : "Sin Torneo")
                 .build();
     }
 }

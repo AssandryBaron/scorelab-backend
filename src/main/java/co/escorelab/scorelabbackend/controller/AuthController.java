@@ -1,6 +1,7 @@
 package co.escorelab.scorelabbackend.controller;
 
 import co.escorelab.scorelabbackend.dto.ApiResponse;
+import co.escorelab.scorelabbackend.dto.AuthResponse;
 import co.escorelab.scorelabbackend.dto.LoginRequest;
 import co.escorelab.scorelabbackend.dto.RegistroRequest;
 import co.escorelab.scorelabbackend.model.Usuario;
@@ -24,8 +25,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequest request) {
-        String token = authService.login(request.getCorreo(), request.getContrasena());
-        return ResponseEntity.ok(ApiResponse.ok("¡Inicio de sesión exitoso!", token));
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody LoginRequest request) {
+        AuthResponse response = authService.login(request.getCorreo(), request.getContrasena());
+        return ResponseEntity.ok(ApiResponse.ok("Inicio de sesión exitoso", response));
     }
 }

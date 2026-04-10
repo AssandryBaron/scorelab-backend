@@ -19,6 +19,7 @@ public class JugadorController {
 
     private final JugadorService jugadorService;
 
+    // Registro individual (el que ya tenías)
     @PostMapping("/{equipoId}/jugadores")
     public ResponseEntity<ApiResponse<Jugador>> registrarJugador(
             @PathVariable Long equipoId,
@@ -28,6 +29,18 @@ public class JugadorController {
         String correoDelegado = principal.getName();
         Jugador jugador = jugadorService.registrarJugador(equipoId, request, correoDelegado);
         return ResponseEntity.ok(ApiResponse.ok("¡Jugador registrado con éxito!", jugador));
+    }
+
+    // 🌟 NUEVO: Registro Masivo (Para el formulario de la tabla)
+    @PostMapping("/{equipoId}/jugadores/lote")
+    public ResponseEntity<ApiResponse<List<Jugador>>> registrarJugadoresLote(
+            @PathVariable Long equipoId,
+            @Valid @RequestBody List<JugadorRequest> requests,
+            Principal principal) {
+
+        String correoDelegado = principal.getName();
+        List<Jugador> jugadores = jugadorService.registrarJugadoresLote(equipoId, requests, correoDelegado);
+        return ResponseEntity.ok(ApiResponse.ok("¡Plantilla registrada con éxito!", jugadores));
     }
 
     @GetMapping("/{equipoId}/jugadores")
