@@ -15,4 +15,5 @@ public class TorneoResponse {
     private LocalDate fechaFin;
     private EstadoTorneo estado; // El estado dinámico
     private String nombreOrganizador;
+    private int cantidadEquipos;
 }

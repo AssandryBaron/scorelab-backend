@@ -19,7 +19,7 @@ public class JugadorController {
 
     private final JugadorService jugadorService;
 
-    // Registro individual (el que ya tenías)
+    // Registro individual
     @PostMapping("/{equipoId}/jugadores")
     public ResponseEntity<ApiResponse<Jugador>> registrarJugador(
             @PathVariable Long equipoId,

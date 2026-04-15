@@ -19,7 +19,7 @@ public class EquipoController {
 
     private final EquipoService equipoService;
 
-    // 🔒 Protegido: Crear un nuevo equipo
+    // Crear un nuevo equipo
     @PostMapping
     public ResponseEntity<ApiResponse<EquipoResponse>> crearEquipo(
             @Valid @RequestBody EquipoRequest request,
@@ -30,7 +30,7 @@ public class EquipoController {
         return ResponseEntity.ok(ApiResponse.ok("¡Equipo creado exitosamente!", response));
     }
 
-    // 🔒 Protegido: Ver los equipos que yo administro
+    //Ver los equipos que yo administro
     @GetMapping("/mis-equipos")
     public ResponseEntity<ApiResponse<List<EquipoResponse>>> listarMisEquipos(Principal principal) {
         String correoUsuario = principal.getName();
@@ -45,7 +45,7 @@ public class EquipoController {
         return ResponseEntity.ok(ApiResponse.ok("Solicitudes de inscripción", pendientes));
     }
 
-    // 🔒 Solo el Organizador puede aprobar equipos
+    //Solo el Organizador puede aprobar equipos
     @PatchMapping("/{id}/aprobar")
     public ResponseEntity<ApiResponse<Void>> aprobarEquipo(@PathVariable Long id) {
         equipoService.cambiarEstado(id, "APROBADO");

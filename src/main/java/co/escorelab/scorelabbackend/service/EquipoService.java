@@ -3,8 +3,10 @@ package co.escorelab.scorelabbackend.service;
 import co.escorelab.scorelabbackend.dto.EquipoRequest;
 import co.escorelab.scorelabbackend.dto.EquipoResponse;
 import co.escorelab.scorelabbackend.model.Equipo;
+import co.escorelab.scorelabbackend.model.Torneo;
 import co.escorelab.scorelabbackend.model.Usuario;
 import co.escorelab.scorelabbackend.repository.EquipoRepository;
+import co.escorelab.scorelabbackend.repository.TorneoRepository;
 import co.escorelab.scorelabbackend.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class EquipoService {
 
     private final EquipoRepository equipoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final TorneoRepository torneoRepository;
 
     public EquipoResponse crearEquipo(EquipoRequest request, String correoUsuario) {
         Usuario delegado = usuarioRepository.findByCorreo(correoUsuario)
@@ -34,11 +37,10 @@ public class EquipoService {
                 .ciudad(request.getCiudad())
                 .fechaCreacion(LocalDate.now())
                 .delegado(delegado)
-                .estado("PENDIENTE") // 🌟 Todo equipo nuevo nace PENDIENTE
+                .estado("PENDIENTE")
                 .build();
 
-        Equipo equipoGuardado = equipoRepository.save(nuevoEquipo);
-        return convertirAResponse(equipoGuardado);
+        return convertirAResponse(equipoRepository.save(nuevoEquipo));
     }
 
     public List<EquipoResponse> listarMisEquipos(String correoUsuario) {
@@ -50,21 +52,34 @@ public class EquipoService {
                 .collect(Collectors.toList());
     }
 
-    // 🌟 NUEVO: Para que el Organizador vea los que esperan aprobación
     public List<EquipoResponse> listarPendientes() {
         return equipoRepository.findByEstado("PENDIENTE").stream()
                 .map(this::convertirAResponse)
                 .collect(Collectors.toList());
     }
 
-    // 🌟 NUEVO: El método que te faltaba para aprobar
     @Transactional
     public void cambiarEstado(Long equipoId, String nuevoEstado) {
         Equipo equipo = equipoRepository.findById(equipoId)
                 .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
 
-        equipo.setEstado(nuevoEstado);
-        equipoRepository.save(equipo);
+        if ("APROBADO".equalsIgnoreCase(nuevoEstado)) {
+            Torneo torneo = torneoRepository.findAll().stream()
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No hay torneos"));
+
+            // 1. Vinculación en BD
+            equipoRepository.vincularATorneoYAprobar(equipoId, torneo, "APROBADO");
+
+            // 2. 🌟 ESTO ES LO NUEVO: Actualizamos el objeto en memoria para el contador
+            torneo.agregarEquipo(equipo);
+            torneoRepository.save(torneo);
+
+            System.out.println("✅ ¡Contador actualizado en memoria!");
+        } else {
+            equipo.setEstado(nuevoEstado);
+            equipoRepository.save(equipo);
+        }
     }
 
     private EquipoResponse convertirAResponse(Equipo equipo) {
@@ -74,8 +89,7 @@ public class EquipoService {
                 .ciudad(equipo.getCiudad())
                 .fechaCreacion(equipo.getFechaCreacion())
                 .nombreDelegado(equipo.getDelegado().getNombre())
-                .estado(equipo.getEstado()) // 🌟 Mapeamos el estado a la respuesta
-                // Si tu modelo Equipo tiene relación con Torneo, añade esto:
+                .estado(equipo.getEstado())
                 .nombreTorneo(equipo.getTorneo() != null ? equipo.getTorneo().getNombre() : "Sin Torneo")
                 .build();
     }

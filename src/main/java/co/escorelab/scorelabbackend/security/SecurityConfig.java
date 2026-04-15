@@ -28,7 +28,6 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(List.of("http://localhost:3000"));
-                    // 🌟 Aseguramos que PATCH esté presente para la aprobación
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
@@ -39,17 +38,20 @@ public class SecurityConfig {
                         // 1. Endpoints Públicos
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // 2. Torneos
+                        // 2. Torneos: Reglas específicas para el Organizador primero
+                        // Esto soluciona el error 403 al crear (POST)
+                        .requestMatchers(HttpMethod.POST, "/api/torneos/**").hasAuthority("ORGANIZADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/torneos/mis-torneos").hasAuthority("ORGANIZADOR")
+
+                        // Acceso general para torneos (Ver todos, etc.)
                         .requestMatchers(HttpMethod.GET, "/api/torneos/todos").authenticated()
                         .requestMatchers("/api/torneos/**").authenticated()
 
-                        // 3. Equipos (Reglas específicas de arriba a abajo)
-                        // 🌟 SOLO el Organizador puede ver pendientes y aprobar
-                        // Cambia esto:
+                        // 3. Equipos: Gestión exclusiva del Organizador
                         .requestMatchers(HttpMethod.GET, "/api/equipos/pendientes").hasAuthority("ORGANIZADOR")
                         .requestMatchers(HttpMethod.PATCH, "/api/equipos/*/aprobar").hasAuthority("ORGANIZADOR")
 
-                        // El resto de acciones de equipos para cualquier usuario autenticado (Delegados)
+                        // Acciones generales de equipos para Delegados/Otros
                         .requestMatchers("/api/equipos/**").authenticated()
 
                         .anyRequest().authenticated()
