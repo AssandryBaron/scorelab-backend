@@ -3,6 +3,7 @@ package co.escorelab.scorelabbackend.controller;
 import co.escorelab.scorelabbackend.dto.ApiResponse;
 import co.escorelab.scorelabbackend.dto.EquipoRequest;
 import co.escorelab.scorelabbackend.dto.EquipoResponse;
+import co.escorelab.scorelabbackend.dto.MotivoRechazoRequest;
 import co.escorelab.scorelabbackend.service.EquipoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,10 +46,19 @@ public class EquipoController {
         return ResponseEntity.ok(ApiResponse.ok("Solicitudes de inscripción", pendientes));
     }
 
-    //Solo el Organizador puede aprobar equipos
-    @PatchMapping("/{id}/aprobar")
-    public ResponseEntity<ApiResponse<Void>> aprobarEquipo(@PathVariable Long id) {
-        equipoService.cambiarEstado(id, "APROBADO");
-        return ResponseEntity.ok(ApiResponse.ok("Equipo aprobado con éxito", null));
-    }
+    // Solo el Organizador puede aprobar equipos
+@PatchMapping("/{id}/aprobar")
+public ResponseEntity<ApiResponse<Void>> aprobarEquipo(@PathVariable Long id) {
+    equipoService.cambiarEstado(id, "APROBADO", null);
+    return ResponseEntity.ok(ApiResponse.ok("Equipo aprobado con éxito", null));
+}
+
+@PatchMapping("/{id}/rechazar")
+public ResponseEntity<ApiResponse<Void>> rechazarEquipo(
+        @PathVariable Long id,
+        @RequestBody MotivoRechazoRequest request) {
+
+    equipoService.cambiarEstado(id, "RECHAZADO", request.getMotivoRechazo());
+    return ResponseEntity.ok(ApiResponse.ok("Equipo rechazado con éxito", null));
+}
 }

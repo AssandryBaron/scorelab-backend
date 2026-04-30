@@ -1,5 +1,7 @@
 package co.escorelab.scorelabbackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,5 +38,6 @@ public class Jugador {
 
     @ManyToOne
     @JoinColumn(name = "equipo_id", nullable = false)
+    @JsonIgnore
     private Equipo equipo;
 }

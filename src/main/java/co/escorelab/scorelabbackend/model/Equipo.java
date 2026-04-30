@@ -46,6 +46,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "equipos")
 @Data
@@ -72,7 +74,10 @@ public class Equipo {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "torneo_id")
+    @JsonIgnore
     private Torneo torneo; // Se dejó una sola vez para evitar el error de duplicado
 
     private String estado; // PENDIENTE, APROBADO, RECHAZADO
+
+    private String motivoRechazo;
 }

@@ -5,6 +5,8 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "torneos")
 @Data
@@ -33,6 +35,7 @@ public class Torneo {
     private Usuario organizador;
 
     @OneToMany(mappedBy = "torneo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Equipo> equipos;
 
     // 🌟 ESTA ES LA MAGIA DEL ESTADO EN TIEMPO REAL

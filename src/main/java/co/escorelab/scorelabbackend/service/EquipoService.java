@@ -38,6 +38,7 @@ public class EquipoService {
                 .fechaCreacion(LocalDate.now())
                 .delegado(delegado)
                 .estado("PENDIENTE")
+                .motivoRechazo(null)
                 .build();
 
         return convertirAResponse(equipoRepository.save(nuevoEquipo));
@@ -59,28 +60,31 @@ public class EquipoService {
     }
 
     @Transactional
-    public void cambiarEstado(Long equipoId, String nuevoEstado) {
-        Equipo equipo = equipoRepository.findById(equipoId)
-                .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
+public void cambiarEstado(Long equipoId, String nuevoEstado, String motivo) {
 
-        if ("APROBADO".equalsIgnoreCase(nuevoEstado)) {
-            Torneo torneo = torneoRepository.findAll().stream()
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("No hay torneos"));
+    Equipo equipo = equipoRepository.findById(equipoId)
+            .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
 
-            // 1. Vinculación en BD
-            equipoRepository.vincularATorneoYAprobar(equipoId, torneo, "APROBADO");
+    if ("APROBADO".equalsIgnoreCase(nuevoEstado)) {
 
-            // 2. 🌟 ESTO ES LO NUEVO: Actualizamos el objeto en memoria para el contador
-            torneo.agregarEquipo(equipo);
-            torneoRepository.save(torneo);
+        Torneo torneo = torneoRepository.findAll().stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No hay torneos"));
 
-            System.out.println("✅ ¡Contador actualizado en memoria!");
-        } else {
-            equipo.setEstado(nuevoEstado);
-            equipoRepository.save(equipo);
-        }
+        equipoRepository.vincularATorneoYAprobar(equipoId, torneo, "APROBADO");
+
+        torneo.agregarEquipo(equipo);
+        torneoRepository.save(torneo);
+
+    } else if ("RECHAZADO".equalsIgnoreCase(nuevoEstado)) {
+
+        equipo.setEstado("RECHAZADO");
+        // opcional: guardar motivo si tienes campo
+        equipo.setMotivoRechazo(motivo);
+
+        equipoRepository.save(equipo);
     }
+}
 
     private EquipoResponse convertirAResponse(Equipo equipo) {
         return EquipoResponse.builder()
@@ -88,9 +92,17 @@ public class EquipoService {
                 .nombre(equipo.getNombre())
                 .ciudad(equipo.getCiudad())
                 .fechaCreacion(equipo.getFechaCreacion())
-                .nombreDelegado(equipo.getDelegado().getNombre())
+                .nombreDelegado(
+                        equipo.getDelegado() != null
+                                ? equipo.getDelegado().getNombre()
+                                : "Sin delegado"
+                )
                 .estado(equipo.getEstado())
-                .nombreTorneo(equipo.getTorneo() != null ? equipo.getTorneo().getNombre() : "Sin Torneo")
+                .nombreTorneo(
+                        equipo.getTorneo() != null
+                                ? equipo.getTorneo().getNombre()
+                                : "Sin Torneo"
+                )
                 .build();
     }
 }
