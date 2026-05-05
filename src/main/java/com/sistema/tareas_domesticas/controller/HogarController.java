@@ -20,4 +20,10 @@ public class HogarController {
         Hogar hogar = hogarService.crearHogar(request.getUsuarioId(), request.getNombre());
         return new HogarResponse(hogar.getId(), hogar.getNombre(), hogar.getCodigoInvitacion());
     }
+
+    @PostMapping("/unirse")
+    public HogarResponse unirseAHogar(@RequestParam Long usuarioId, @RequestParam String codigoInvitacion) {
+        Hogar hogar = hogarService.unirseAHogar(usuarioId, codigoInvitacion);
+        return new HogarResponse(hogar.getId(), hogar.getNombre(), hogar.getCodigoInvitacion());
+    }
 }

@@ -20,7 +20,6 @@ public class MiembroController {
     /**
      * HU-05 – Escenario 1: Ver lista de miembros del hogar
      * GET /api/hogares/{hogarId}/miembros
-     * Solo el administrador debería llamar este endpoint desde el front.
      */
     @GetMapping("/{hogarId}/miembros")
     public ResponseEntity<List<Usuario>> listarMiembros(@PathVariable Long hogarId) {
@@ -31,7 +30,6 @@ public class MiembroController {
     /**
      * HU-05 – Escenario 2 y 3: Eliminar miembro del hogar
      * DELETE /api/hogares/{hogarId}/miembros/{usuarioId}
-     * Param: adminId (quien hace la petición) para validar auto-eliminación.
      */
     @DeleteMapping("/{hogarId}/miembros/{usuarioId}")
     public ResponseEntity<Map<String, String>> eliminarMiembro(

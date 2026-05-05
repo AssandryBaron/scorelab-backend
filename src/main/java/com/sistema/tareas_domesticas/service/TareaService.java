@@ -7,6 +7,7 @@ import com.sistema.tareas_domesticas.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class TareaService {
@@ -17,8 +18,12 @@ public class TareaService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    /**
+     * HU-06: Crear una nueva tarea.
+     * Valida que el creador sea ADMINISTRADOR y pertenezca a un hogar.
+     */
     public Tarea crearTarea(Long usuarioId, String nombre, String descripcion, String prioridad, LocalDate fechaLimite) {
-        // Validar campos obligatorios
+        // 1. Validar campos obligatorios
         if (nombre == null || nombre.isBlank()) {
             throw new RuntimeException("El nombre de la tarea es obligatorio");
         }
@@ -29,12 +34,12 @@ public class TareaService {
             throw new RuntimeException("La fecha límite de la tarea es obligatoria");
         }
 
-        // Validar fecha límite no anterior a hoy
+        // 2. Validar fecha límite no anterior a hoy
         if (fechaLimite.isBefore(LocalDate.now())) {
             throw new RuntimeException("La fecha límite no puede ser anterior a hoy");
         }
 
-        // Validar que el usuario sea administrador y pertenezca a un hogar
+        // 3. Validar que el usuario exista y tenga permisos
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -46,15 +51,26 @@ public class TareaService {
             throw new RuntimeException("El usuario no pertenece a ningún hogar");
         }
 
-        // Crear tarea
+        // 4. Mapear y guardar tarea
         Tarea tarea = new Tarea();
         tarea.setNombre(nombre);
         tarea.setDescripcion(descripcion);
         tarea.setPrioridad(prioridad.toUpperCase());
         tarea.setFechaLimite(fechaLimite);
-        tarea.setEstado("Pendiente");
-        tarea.setHogarId(usuario.getFamiliaId());
+        tarea.setEstado("PENDIENTE"); // Estado inicial
+        tarea.setHogarId(usuario.getFamiliaId()); // Vinculación automática al hogar
 
         return tareaRepository.save(tarea);
+    }
+
+    /**
+     * HU-07: Listar tareas del hogar.
+     * Este método es indispensable para el endpoint en TareaController.
+     */
+    public List<Tarea> listarTareasPorHogar(Long hogarId) {
+        if (hogarId == null) {
+            throw new RuntimeException("El ID del hogar es obligatorio para listar tareas");
+        }
+        return tareaRepository.findByHogarId(hogarId);
     }
 }
